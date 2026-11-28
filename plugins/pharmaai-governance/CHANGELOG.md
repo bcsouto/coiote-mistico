@@ -1,5 +1,9 @@
 # Histórico
 
+## 1.0.4, 28/11/2026
+
+- Removido `assets/logo-dark.svg`, não referenciado por nenhum arquivo: o diretório só aceita SVG como ícone do plugin (`assets/logo.svg`). Nenhuma mudança de comportamento.
+
 ## 1.0.3, 28/11/2026
 
 - Texto de documentação reescrito (`CHANGELOG.md` e `evals/COMO-AVALIAR.md`) para eliminar o aviso RUNTIME_FETCH_EXEC da validação do diretório; nenhuma mudança de comportamento.
