@@ -28,7 +28,7 @@ class Estrutura(unittest.TestCase):
         self.assertFalse((ROOT / '.codex-plugin').exists())
         self.assertFalse((ROOT / 'bin').exists())
         self.assertEqual(m['license'], 'MIT AND CC-BY-NC-ND-4.0')
-        self.assertEqual(m['version'], '1.0.2')
+        self.assertEqual(m['version'], '1.0.3')
         self.assertTrue((ROOT / 'LICENSES/MIT.txt').is_file())
         self.assertTrue((ROOT / m['icon']).is_file())
         self.assertTrue((ROOT / 'LICENSE').is_file())
