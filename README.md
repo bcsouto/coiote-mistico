@@ -1,4 +1,4 @@
-# Marketplace de plugins · Bruno Corrêa Souto
+# Marketplace de plugins by: Bruno · in/brunocsouto
 
 Catálogo de plugins para o Claude (claude.ai, Cowork e Claude Code).
 
