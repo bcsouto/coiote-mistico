@@ -1,11 +1,10 @@
 {
   "name": "pharmaai-governance",
   "displayName": "PharmaAI Governance",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Assessoria regulatória para o setor farmacêutico e da saúde com 7 funções: auditar afirmações e fontes com dossiê verificável; analisar vigência e aplicabilidade de normas; acompanhar mudanças, consultas e prazos; comparar políticas com normas e apontar lacunas; avaliar governança e impacto de IA; revisar contratos de fornecedores de IA; organizar perfil e casos sob pedido.",
   "author": {
     "name": "Bruno Corrêa Souto · /in/brunocsouto",
-    "email": "bcsouto@protonmail.com",
     "url": "https://www.linkedin.com/in/brunocsouto/"
   },
   "homepage": "https://github.com/bcsouto/brunocsouto/tree/main/plugins/pharmaai-governance",

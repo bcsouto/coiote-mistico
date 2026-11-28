@@ -1,7 +1,7 @@
 {
   "name": "coiote-mistico",
   "displayName": "Coiote Místico",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Consulta de tarô Rider-Waite-Smith com três perguntas, selo SHA-256 verificável antes da escolha e prompt de imagem da tiragem no padrão MidasFlow.",
   "author": {
     "name": "Bruno Corrêa Souto · in/brunocsouto",

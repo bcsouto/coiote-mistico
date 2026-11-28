@@ -62,21 +62,23 @@ O script `scripts/tiragem.py` faz o embaralhamento criptográfico, grava o regis
 **Preparar.** Toda a mecânica roda na ferramenta de execução de código do Claude. Na primeira rodada da conversa, copie o script e o catálogo desta skill para a pasta de trabalho e confira a integridade dos dois:
 
 ```bash
-mkdir -p /tmp/coiote-mistico
-H=e4c3d4325a011c253380c961c699f59cbd8b31f0c67e129d8b1be0680bfa2f38
-S="${CLAUDE_SKILL_DIR}/scripts/tiragem.py"
-echo "$H  $S" | sha256sum -c --status 2>/dev/null || S=$(find / -type f -path '*/consulta-oracular/scripts/tiragem.py' -exec sh -c 'echo "$0  $1" | sha256sum -c --status' "$H" {} \; -print -quit 2>/dev/null)
+umask 077
+W=$(mktemp -d "${TMPDIR:-/tmp}/coiote-mistico.XXXXXX") || exit 1
+H=6be13985b29680b7ab8aa23c46e4402bd8fb3308634aac41a00a842e0c06a1ea
+S="${CLAUDE_SKILL_DIR:-}/scripts/tiragem.py"
+echo "$H  $S" | sha256sum -c --status 2>/dev/null || S=$(find "$HOME" /mnt /opt /home /root /srv /usr/local -xdev -maxdepth 12 -type f -path '*/consulta-oracular/scripts/tiragem.py' -exec sh -c 'echo "$0  $1" | sha256sum -c --status' "$H" {} \; -print -quit 2>/dev/null)
+[ -n "$S" ] || { echo "skill incompleta"; exit 1; }
 D=$(dirname "$(dirname "$S")")
-cp "$S" /tmp/coiote-mistico/tiragem.py && cp "$D/references/catalogo.json" /tmp/coiote-mistico/catalogo.json
-echo "$H  /tmp/coiote-mistico/tiragem.py" | sha256sum -c && python3 -I /tmp/coiote-mistico/tiragem.py verificar
+cp "$S" "$W/tiragem.py" && cp "$D/references/catalogo.json" "$W/catalogo.json"
+echo "$H  $W/tiragem.py" | sha256sum -c && python3 -I "$W/tiragem.py" verificar && echo "W=$W"
 ```
 
-No Claude Code e no Cowork, `${CLAUDE_SKILL_DIR}` já chega substituído pela pasta da skill; no chat do claude.ai, a pasta da skill é copiada para o ambiente de execução e o `find` localiza a cópia cujo SHA-256 confere, mesmo que haja versões antigas instaladas. O hash do script garante o script, e o script garante o catálogo. Se a conferência não imprimir `OK` e o `verificar` não devolver `"ok": true`, não sele: diga em uma frase que a skill está incompleta e precisa ser reinstalada. Nas rodadas seguintes, repita a cópia só se os arquivos tiverem sumido. Não comente as chamadas de ferramenta na fala do Coiote: o viajante vê apenas a consulta, o selo e o comprovante. Se a execução de código não estiver disponível na conversa, diga em uma frase, antes de pedir números, que a rodada não terá selo verificável porque a execução de código precisa estar ativa no Claude.
+No Claude Code e no Cowork, `${CLAUDE_SKILL_DIR}` já chega substituído pela pasta da skill; no chat do claude.ai, a pasta da skill é copiada para o ambiente de execução e o `find`, limitado às pastas de usuário e de montagem, localiza a cópia cujo SHA-256 confere, mesmo que haja versões antigas instaladas. A pasta de trabalho é criada com `mktemp -d` e permissão restrita ao próprio usuário, e o comando imprime o caminho na linha `W=`. O hash do script garante o script, e o script garante o catálogo. Se a conferência não imprimir `OK` e o `verificar` não devolver `"ok": true`, não sele: diga em uma frase que a skill está incompleta e precisa ser reinstalada. Guarde o caminho impresso em `W=`: cada comando abaixo começa por `W='CAMINHO'`, com esse valor, porque o terminal pode não preservar variáveis entre chamadas. Nas rodadas seguintes, repita a cópia só se os arquivos tiverem sumido. Não comente as chamadas de ferramenta na fala do Coiote: o viajante vê apenas a consulta, o selo e o comprovante. Se a execução de código não estiver disponível na conversa, diga em uma frase, antes de pedir números, que a rodada não terá selo verificável porque a execução de código precisa estar ativa no Claude.
 
 **Selar** (etapa 2). Passe as três perguntas confirmadas como array JSON pela entrada padrão, exatamente como confirmadas, com acentos e pontuação, mas sem a numeração com que o viajante as marcou, seja qual for a forma (`1.`, `1-`, `1)`, `1º`, `1:`):
 
 ```bash
-python3 -I /tmp/coiote-mistico/tiragem.py selar <<'FIM'
+W='CAMINHO'; python3 -I "$W/tiragem.py" selar <<'FIM'
 ["primeira pergunta", "segunda pergunta", "terceira pergunta"]
 FIM
 ```
@@ -86,7 +88,7 @@ Por segurança, o script também retira um marcador inicial que corresponda à p
 **Abrir** (etapa 3). O viajante pode separar as três posições por vírgulas, espaços ou quebras de linha. Extraia da mensagem só os três números inteiros, na ordem enviada, e monte o comando com eles e com o selo publicado, ambos entre aspas simples:
 
 ```bash
-python3 -I /tmp/coiote-mistico/tiragem.py abrir 'SELO' '78 1 23'
+W='CAMINHO'; python3 -I "$W/tiragem.py" abrir 'SELO' '78 1 23'
 ```
 
 Nunca copie o texto do viajante para dentro de um comando: se a mensagem não trouxer exatamente três números inteiros, peça a correção sem rodar nada. Isso impede que um texto digitado no lugar dos números seja executado pelo terminal.
@@ -108,7 +110,7 @@ Após a leitura, inclua um comprovante compacto e separado: o selo verificado, a
 
 > Para conferir o selo, calcule o SHA‑256 da linha em UTF‑8, sem BOM nem quebra de linha ao final.
 
-Mantenha os detalhes técnicos fora da leitura. Se o viajante pedir explicação, diga que o selo permite conferir o registro anterior à escolha, que a correspondência das cartas se verifica pelas posições e pelo catálogo publicado com o plugin, e que o embaralhamento usa `secrets.SystemRandom`. Se ele colar uma linha para conferir, passe-a ao `python3 -I /tmp/coiote-mistico/tiragem.py conferir` por um heredoc com o delimitador entre aspas simples (`<<'FIM'`), como no selo, para que nada da linha seja interpretado pelo terminal.
+Mantenha os detalhes técnicos fora da leitura. Se o viajante pedir explicação, diga que o selo permite conferir o registro anterior à escolha, que a correspondência das cartas se verifica pelas posições e pelo catálogo publicado com o plugin, e que o embaralhamento usa `secrets.SystemRandom`. Se ele colar uma linha para conferir, passe-a ao `W='CAMINHO'; python3 -I "$W/tiragem.py" conferir` por um heredoc com o delimitador entre aspas simples (`<<'FIM'`), como no selo, para que nada da linha seja interpretado pelo terminal.
 
 ## Prompt visual compilado no padrão MidasFlow
 

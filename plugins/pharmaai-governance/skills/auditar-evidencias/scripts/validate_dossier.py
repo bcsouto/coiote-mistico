@@ -261,7 +261,7 @@ def main():
                         hashlib.sha256(args.previous.read_bytes()).hexdigest() if args.previous else None)
         print(json.dumps(result,ensure_ascii=False,indent=2))
         return 0 if result['valido'] else 1
-    except (OSError,ValueError,KeyError,TypeError,UnicodeError) as exc:
+    except (OSError,ValueError,KeyError,TypeError,UnicodeError,RecursionError) as exc:
         print(json.dumps({'valido':False,'erro_execucao':str(exc)},ensure_ascii=False))
         return 2
 

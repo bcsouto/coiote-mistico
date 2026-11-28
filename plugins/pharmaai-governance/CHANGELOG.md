@@ -1,5 +1,10 @@
 # Histórico
 
+## 1.0.5, 28/11/2026
+
+- `validate_dossier.py`: JSON com aninhamento excessivo agora devolve `erro_execucao` e código de saída 2, em vez de um traceback (`RecursionError` incluído no tratamento de erros de `main`); teste de regressão adicionado.
+- `plugin.json`: removido o e-mail do autor, que ficava exposto no repositório público.
+
 ## 1.0.4, 28/11/2026
 
 - Removido `assets/logo-dark.svg`, não referenciado por nenhum arquivo: o diretório só aceita SVG como ícone do plugin (`assets/logo.svg`). Nenhuma mudança de comportamento.

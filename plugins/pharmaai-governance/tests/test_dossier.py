@@ -15,6 +15,12 @@ BASE=read(S/'assets/dossie-ficticio.json');TEXTS=read(S/'assets/textos-ficticios
 def revision():
     d=copy.deepcopy(BASE);d.update(versao_dossie='2',revisao_anterior={'localizacao':'arquivo:anterior.json','versao_dossie':'1','material_id':'material-ficticio','versao_material':None,'sha256_arquivo':None},mudancas=[{'afirmacao_id':'a1','tipo':'alterada','estado_anterior':'SUSTENTADA','estado_atual':'SUSTENTADA','motivo':'Condição explicitada sem mudar o estado de suporte.','evidencia_ids':['e1']}]);return d
 class DossierTests(unittest.TestCase):
+    def test_json_profundo(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            arq=Path(d)/'profundo.json';arq.write_text('['*100000,encoding='utf-8')
+            r=subprocess.run([sys.executable,'-I',str(S/'scripts/validate_dossier.py'),str(arq)],capture_output=True,text=True)
+            self.assertEqual(r.returncode,2);self.assertFalse(json.loads(r.stdout)['valido']);self.assertNotIn('Traceback',r.stderr)
     def test_examples(self):
         self.assertTrue(v.validate(BASE,TEXTS)['valido']);self.assertTrue(v.validate(LEGACY,TEXTS)['valido'])
     def test_revision(self):self.assertTrue(v.validate(revision(),TEXTS)['valido'])
