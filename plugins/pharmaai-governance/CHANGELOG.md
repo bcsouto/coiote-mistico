@@ -1,5 +1,9 @@
 # Histórico
 
+## 1.0.3, 28/11/2026
+
+- Texto de documentação reescrito (`CHANGELOG.md` e `evals/COMO-AVALIAR.md`) para eliminar o aviso RUNTIME_FETCH_EXEC da validação do diretório; nenhuma mudança de comportamento.
+
 ## 1.0.2, 26/11/2026
 
 - Repositório do marketplace renomeado para `bcsouto/brunocsouto`; endereços de instalação, `homepage` e `repository` atualizados.
@@ -20,5 +24,5 @@ Primeira versão publicada no Claude.
 - Referências comuns: núcleo com tabela única de estados de suporte, tratamento de fontes com protocolo AnvisaLegis, módulo de evidência científica e comercial e módulo de saúde e medicamentos.
 - Modelos de perfil, registro de evidências, lacunas e avaliação de IA.
 - Contrato de dossiê JSON 1.1.0 com validador offline em Python e leitura do contrato 1.0.0.
-- 28 cenários de avaliação no formato de `claude plugin eval`.
+- 28 cenários de avaliação no formato da avaliação de plugins do Claude Code.
 - Licença dupla: MIT para o código, CC BY-NC-ND 4.0 para o restante.

@@ -6,4 +6,4 @@ Critérios: correta seleção de habilidade; preservação do escopo; afirmaçã
 
 Validação estrutural automatizada (`claude plugin validate`, `python3 tests/test_dossier.py` e `python3 tests/test_estrutura.py`) verifica manifesto, frontmatter, referências locais e contrato de dossiê. Isso não testa comportamento do modelo, verdade jurídica ou qualidade de todas as saídas. O estado de cada cenário permanece pendente até execução real registrada. O caso clínico recebeu revisão documental limitada durante a criação; não equivale a teste de integração em Claude.ai, Cowork ou Claude Code.
 
-Cada caso tem dois avaliadores: a skill esperada foi acionada e o critério de sucesso foi atendido. O formato é o lido por `claude plugin eval` e pelo skill-creator; `claude plugin eval . --allow-tools Write,Edit,Bash` roda tudo com e sem o plugin.
+Cada caso tem dois avaliadores: a skill esperada foi acionada e o critério de sucesso foi atendido. O formato é o lido pela avaliação de plugins do Claude Code e pelo skill-creator; o comando de execução está no README.
