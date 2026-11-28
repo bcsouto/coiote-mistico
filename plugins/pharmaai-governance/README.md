@@ -1,4 +1,4 @@
-# PharmaAI Governance 1.0.4
+# PharmaAI Governance 1.0.5
 
 Autor: Bruno Corrêa Souto · /in/brunocsouto
 
@@ -62,4 +62,4 @@ O último comando roda os 29 cenários de `evals/` com e sem o plugin; são exec
 
 O plugin usa duas licenças. O código (o validador `validate_dossier.py`, os esquemas JSON do dossiê e os testes) está sob a licença MIT. Todo o restante (instruções das skills, referências, modelos, cenários, README e ícone) está sob a Creative Commons Atribuição-NãoComercial-SemDerivações 4.0 Internacional (CC BY-NC-ND 4.0): pode ser copiado e redistribuído sem alterações, com crédito ao autor e sem fins comerciais. Versões modificadas e uso comercial dependem de autorização prévia e por escrito. Veja `LICENSE` e `LICENSES/`.
 
-Versões: plugin 1.0.4. O formato do dossiê JSON tem numeração própria, 1.1.0, e o validador também lê o formato 1.0.0. Proveniência em `NOTICE.md`; documentação oficial consultada em `docs/ANTHROPIC.md`.
+Versões: plugin 1.0.5. O formato do dossiê JSON tem numeração própria, 1.1.0, e o validador também lê o formato 1.0.0. Proveniência em `NOTICE.md`; documentação oficial consultada em `docs/ANTHROPIC.md`.

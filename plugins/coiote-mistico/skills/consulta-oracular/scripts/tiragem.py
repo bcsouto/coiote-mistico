@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Bruno Corrêa Souto
-"""Coiote Místico 1.2.1: selo e abertura verificáveis de tiragens Rider-Waite-Smith."""
+"""Coiote Místico 1.2.3: selo e abertura verificáveis de tiragens Rider-Waite-Smith."""
 import hashlib
 import json
 import os
@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 VERSAO = "TARO-RWS-3Q-V1"
-PASTA = Path(os.environ.get("COIOTE_DIR", str(Path.home() / ".coiote-mistico")))
+PASTA = Path.home() / ".coiote-mistico"
 
 CATALOGO_SHA256 = "39f9962ec406e05aef102f29ec7e446e4a6f2ce49c96196d1c97633a28e0e250"
 AQUI = Path(__file__).resolve().parent
@@ -42,16 +42,16 @@ def limpar_pergunta(ordem, texto):
 
 
 def carregar_catalogo():
-    if "COIOTE_CATALOGO" in os.environ:
-        caminho = Path(os.environ["COIOTE_CATALOGO"])
-    else:
-        caminho = next((c for c in CATALOGO_CANDIDATOS if c.is_file()), CATALOGO_CANDIDATOS[0])
+    caminho = next((c for c in CATALOGO_CANDIDATOS if c.is_file()), CATALOGO_CANDIDATOS[0])
     if not caminho.is_file():
         saida(3, erro="catalogo_ausente", mensagem="O catálogo das cartas não foi encontrado.")
     dados = caminho.read_bytes()
     if sha256(dados) != CATALOGO_SHA256:
         saida(3, erro="catalogo_divergente", mensagem="O catálogo das cartas não confere com o hash esperado.")
-    catalogo = json.loads(dados.decode("utf-8"))
+    try:
+        catalogo = json.loads(dados.decode("utf-8"))
+    except (ValueError, RecursionError):
+        saida(3, erro="catalogo_invalido", mensagem="O catálogo das cartas tem estrutura inválida.")
     valido = (
         isinstance(catalogo, list) and len(catalogo) == 78
         and all(isinstance(c, dict) and set(c) == set(CAMPOS)
@@ -63,12 +63,36 @@ def carregar_catalogo():
     return catalogo
 
 
+def preparar_pasta():
+    PASTA.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if hasattr(os, "geteuid") and PASTA.stat().st_uid != os.geteuid():
+        saida(3, erro="pasta_alheia", mensagem="A pasta de registros pertence a outro usuário.")
+    os.chmod(PASTA, 0o700)
+
+
+def gravar_novo(caminho, dados):
+    try:
+        fd = os.open(caminho, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600)
+    except FileExistsError:
+        if caminho.is_file() and not caminho.is_symlink() and caminho.read_bytes() == dados:
+            return
+        saida(3, erro="gravacao_falhou", mensagem="Já existe um arquivo diferente para este registro.")
+    with os.fdopen(fd, "wb") as arquivo:
+        arquivo.write(dados)
+
+
+def ligacao(dados, posicoes):
+    return sha256(dados + b"|" + json.dumps(posicoes).encode("utf-8"))
+
+
 def selar():
     carregar_catalogo()
     try:
         perguntas = json.loads(sys.stdin.read())
     except json.JSONDecodeError as erro:
         saida(2, erro="entrada_invalida", mensagem=f"JSON inválido: {erro}")
+    except RecursionError:
+        saida(2, erro="entrada_invalida", mensagem="JSON com aninhamento excessivo.")
     if not (isinstance(perguntas, list) and len(perguntas) == 3
             and all(isinstance(p, str) and p.strip() for p in perguntas)):
         saida(2, erro="entrada_invalida", mensagem="Envie um array JSON com exatamente três perguntas não vazias.")
@@ -79,9 +103,9 @@ def selar():
         saida(3, erro="baralho_invalido", mensagem="Falha ao embaralhar.")
     dados = serializar([VERSAO, perguntas, secrets.token_hex(32), baralho])
     selo = sha256(dados)
-    PASTA.mkdir(parents=True, exist_ok=True)
+    preparar_pasta()
     caminho = PASTA / f"{selo}.json"
-    caminho.write_bytes(dados)
+    gravar_novo(caminho, dados)
     if sha256(caminho.read_bytes()) != selo:
         saida(3, erro="gravacao_falhou", mensagem="O registro gravado não reproduz o selo.")
     saida(0, selo=selo, perguntas=perguntas)
@@ -99,7 +123,7 @@ def carregar(selo):
     try:
         registro = json.loads(dados.decode("utf-8"))
         versao, perguntas, nonce, baralho = registro
-    except (ValueError, TypeError, UnicodeDecodeError):
+    except (ValueError, TypeError, UnicodeDecodeError, RecursionError):
         saida(3, erro="registro_corrompido", mensagem="O registro não tem a estrutura esperada.")
     valido = (
         versao == VERSAO
@@ -133,19 +157,25 @@ def abrir(selo, texto):
     dados, perguntas, baralho = carregar(selo)
     catalogo = carregar_catalogo()
     marca = PASTA / f"{selo}.abertura.json"
+    if marca.is_symlink():
+        saida(3, erro="marcador_invalido", mensagem="O registro de abertura desta rodada está corrompido.")
     if marca.is_file():
         try:
-            anteriores = json.loads(marca.read_text(encoding="utf-8"))
-        except (ValueError, UnicodeDecodeError):
-            anteriores = None
-        if not (isinstance(anteriores, list) and len(anteriores) == 3
-                and all(type(p) is int and 1 <= p <= 78 for p in anteriores)):
+            gravado = json.loads(marca.read_text(encoding="utf-8"))
+            anteriores = gravado["posicoes"]
+            valido = (isinstance(anteriores, list) and len(anteriores) == 3
+                      and all(type(p) is int and 1 <= p <= 78 for p in anteriores)
+                      and gravado["ligacao"] == ligacao(dados, anteriores)
+                      and set(gravado) == {"posicoes", "ligacao"})
+        except (ValueError, UnicodeDecodeError, KeyError, TypeError, RecursionError):
+            valido = False
+        if not valido:
             saida(3, erro="marcador_invalido", mensagem="O registro de abertura desta rodada está corrompido.")
         if anteriores != posicoes:
             saida(4, erro="rodada_ja_aberta", posicoes_fixadas=anteriores,
                   mensagem="Esta rodada já foi aberta com outras posições. Uma nova escolha exige novo selo.")
     else:
-        marca.write_text(json.dumps(posicoes), encoding="utf-8")
+        gravar_novo(marca, json.dumps({"posicoes": posicoes, "ligacao": ligacao(dados, posicoes)}).encode("utf-8"))
     cartas = []
     for ordem, (pergunta, posicao) in enumerate(zip(perguntas, posicoes), start=1):
         carta = catalogo[baralho[posicao - 1]]
